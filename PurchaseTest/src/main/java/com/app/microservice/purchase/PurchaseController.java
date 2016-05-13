@@ -49,16 +49,20 @@ public class PurchaseController {
 	public @ResponseBody ResponseEntity<User> createUser(@RequestBody User userDetails) throws Exception{
 		User user=null;
 	
+		//for checking existing email 
+		user=userDAO.findByEmail(userDetails.getEmail());
+		if(user!=null){
+			return new ResponseEntity<User>(HttpStatus.CONFLICT);
+		}
 		//for checking update user 
 		user=userDAO.findOne(userDetails.getId());
 		if (user==null){
 			//insert new user 
 			try{
-				user=new User(userDetails.getEmail(),userDetails.getName(),userDetails.getContact(),userDetails.getIsActive(), new Date(),new Date(),userDetails.getPassword(),0,userDetails.getUserType().toLowerCase());
+				user=new User(userDetails.getEmail().toLowerCase(),userDetails.getName(),userDetails.getContact(),userDetails.getIsActive(), new Date(),new Date(),userDetails.getPassword(),userDetails.getUserType().toLowerCase());
 				if(userDetails.getUserType().equalsIgnoreCase("admin"))
 				{
 					if(userDAO.findByUserType("admin")!=null)
-						//throw new Exception("Cannot create two ADMIN users ");
 						return new ResponseEntity<User>(HttpStatus.CONFLICT);
 				}
 				userDAO.save(user);
@@ -66,7 +70,6 @@ public class PurchaseController {
 					throw new Exception("Exception in saving user details...",e);
 				}
 		}else{  
-				userDetails.setCreationTime(user.getCreationTime());
 				userDetails.setLastModifiedTime(new Date());
 				userDAO.save(userDetails);
 			}
@@ -80,12 +83,9 @@ public class PurchaseController {
 	public @ResponseBody ResponseEntity<User> getOneUserDetails(@PathVariable Long id)throws Exception{
 		User user=null;
 			user=userDAO.findOne(id);
-			if(user==null)
-				return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
-			else
-				{	if(user.getAuthToken()==0)
-						throw new Exception("Cannot authenticate. Please login to view your details !!! ");
-			}return new ResponseEntity<User>(user, HttpStatus.OK);
+			if(user.getAuthToken()==0)
+					throw new Exception("Cannot authenticate. Please login to view your details !!! ");
+		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 		
 
@@ -95,13 +95,11 @@ public class PurchaseController {
 		 List<User> users=null;
 		 try{
 			 if(adminUserCheck()){
-		 
-			 users=(List<User>) userDAO.findAll();
-			 return new ResponseEntity<List<User>>(users,HttpStatus.OK);
+		 		 users=(List<User>) userDAO.findAll();
+		 		 	return new ResponseEntity<List<User>>(users,HttpStatus.OK);
 		 }}catch(Exception e){
 			 e.printStackTrace();
 		 }
-		 System.out.println(">>> You are not suthorized to view all user details.");
 		 return new ResponseEntity<List<User>>(HttpStatus.UNAUTHORIZED);
 	 }
 	 
@@ -111,41 +109,39 @@ public class PurchaseController {
 		User user=null;
 		List<Purchases> purchase=null;
 		user=userDAO.findOne(id);
-		if(user!=null)
-		{	
-		 
-			if(user.getAuthToken()==0){
-				throw new Exception("Cannot authenticate. Please login to view your details !!! ");
+		
+		if(user.getAuthToken()==0){
+			throw new Exception("Cannot authenticate. Please login to view your details !!! ");
+		}
+		
+		try{	
+				user.setLastModifiedTime(new Date());
+				purchase=purchaseDAO.findByUserId(user.getId());
+				if(user.getIsActive())	
+					{	for(Purchases purch : purchase){			 						   //getting all the payments of that user and making it offline 
+							purch.setLastModifiedTime(new Date());
+							purch.setIsActive(false);
+						}
+						user.setIsActive(false);
+						System.out.println(">>>>>>> User successfully made inActive !!!");
+						userLog.userLogOut(user.getEmail());
+						return new ResponseEntity<User>(HttpStatus.UNAUTHORIZED);
+					}
+				else
+					{	for(Purchases purch : purchase){
+							purch.setLastModifiedTime(new Date());
+							purch.setIsActive(true);
+						}
+						user.setIsActive(true);
+					}
+				
+				userDAO.save(user);
+				purchaseDAO.save(purchase);													//user status and his payment details also modified
+				return new ResponseEntity<User>(user, HttpStatus.OK);
+			}catch(Exception e){
+				throw new Exception("Could not change status of the user. ",e);
 			}
-			try{	
-					user.setLastModifiedTime(new Date());
-					purchase=purchaseDAO.findByUserId(user.getId());
-					if(user.getIsActive())	
-						{	for(Purchases purch : purchase){			 						   //getting all the payments of that user and making it offline 
-								purch.setLastModifiedTime(new Date());
-								purch.setIsActive(false);
-							}
-							user.setIsActive(false);
-							System.out.println(">>>>>>> User successfully made inActive !!!");
-							userLog.userLogOut(user.getEmail());
-							return new ResponseEntity<User>(HttpStatus.UNAUTHORIZED);
-						}
-					else
-						{	for(Purchases purch : purchase){
-								purch.setLastModifiedTime(new Date());
-								purch.setIsActive(true);
-							}
-							user.setIsActive(true);
-						}
-					
-					userDAO.save(user);
-					purchaseDAO.save(purchase);													//user status and his payment details also modified
-					return new ResponseEntity<User>(user, HttpStatus.OK);
-				}catch(Exception e){
-					throw new Exception("Could not change status of the user. ",e);
-				}
-		}else
-			return new ResponseEntity<User>(HttpStatus.NOT_FOUND); 
+		
 	}
 	
 		
@@ -156,8 +152,7 @@ public class PurchaseController {
 		if(adminUserCheck()){
 				users=userDAO.findByIsActive(isActive);
 				return new  ResponseEntity<List<User>>(users,HttpStatus.OK);
-			 }
-		System.out.println(">>>> You are not authorized to view the details !!!");
+			 }		
 		return new  ResponseEntity<List<User>>(HttpStatus.UNAUTHORIZED);
 	}
 	
@@ -175,12 +170,12 @@ public class PurchaseController {
 
 			//check whether book exists in the database 
 			user=userDAO.findOne(purchases.getUserId());
-			System.out.println("### Reached purchases "+user.toString());
+			
 			if(user.getAuthToken()==0){
 				System.out.println(">>>>> You have not logged in to your account. Please login to purchase !!!");
 				return new  ResponseEntity<Purchases>(HttpStatus.UNAUTHORIZED);
 			}
-			System.out.println("%%%% Checking of the users done ");
+			
 			JSONObject book=parseJSON(purchases);		
 			String bookName=(String)book.get("bookName");
 			Integer isbnId =(Integer) book.get("isbn"); 
@@ -218,11 +213,7 @@ public class PurchaseController {
 			List<Purchases> purchase=null;
 			User user=null;
 			user=userDAO.findOne(userId);
-			if(user==null){
-				throw new Exception(" User with id : "+userId+" does not exists !!!"); 
-			}
 			if(user.getAuthToken()==0){
-				System.out.println(">>>>> You have not logged in. Please login to view your purchase details !!!");
 				return new  ResponseEntity<List<Purchases>>(HttpStatus.UNAUTHORIZED);
 			}
 			purchase=purchaseDAO.findByUserId(userId);
@@ -301,9 +292,6 @@ public class PurchaseController {
 			
 			boolean adminUserCheck()throws Exception{
 				User user=userDAO.findByUserType("admin");
-				if(user==null){
-					throw new Exception(" Admin user does not exists !!!");
-				}
 				if(user.getAuthToken()!=0)				
 					return true;
 				else return false;

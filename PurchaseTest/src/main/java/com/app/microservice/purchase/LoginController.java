@@ -19,24 +19,22 @@ public class LoginController {
 
 	@Autowired
 	UserRepository userDAO;
-	
+		
 	@RequestMapping(value="/login",method=RequestMethod.POST)
 	private ResponseEntity<User> loginUser(@RequestParam String email,@RequestParam String password){
 		User user=null;
 		user=userDAO.findByEmail(email);
-		System.out.println("######### Inside login, diaplying the details of user logged in :"+user);
 		if(user==null){
 			return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
 		}
 		if(!user.getPassword().equalsIgnoreCase(password)){
-			System.out.println(" >>>>>>>>>>> Invalid password !!!");
 			return new ResponseEntity<User>(HttpStatus.UNAUTHORIZED);
 		}
 		if(user.getAuthToken()!=0){
 			return new ResponseEntity<User>(user, HttpStatus.OK);
 		}
 		
-		user.setAuthToken(user.hashCode());
+		validateToken(user);
 		userDAO.save(user);
 		
 		return new ResponseEntity<User>(user, HttpStatus.OK);
@@ -50,9 +48,18 @@ public class LoginController {
 			if(user.getAuthToken()==0){
 				return "You have already logged out.";
 			}
-			user.setAuthToken(0);
+			invalidateToken(user);
 			userDAO.save(user);
 		
 		return "You are successfully logged out."; 
 	}
+	
+	void invalidateToken(User user){
+		user.setAuthToken(0);
+	}
+	
+	void validateToken(User user){
+		user.setAuthToken(user.hashCode());
+	}
+	
 }

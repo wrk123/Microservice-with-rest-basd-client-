@@ -11,6 +11,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,7 +30,7 @@ public class User implements Serializable{
 	  private long id;
 	  
 	  @NotNull
-	  @Column
+	  @Column(name="email")
 	  private String email;
 	  
 	  @NotNull
@@ -64,7 +65,7 @@ public class User implements Serializable{
 	 
 
 	public User( String email, String name, String contact, boolean isActive, Date creationTime,
-			Date lastModifiedTime, String password, int authToken,String userType) {
+			Date lastModifiedTime, String password, String userType) {
 		super();
 		this.email = email;
 		this.name = name;
@@ -73,7 +74,6 @@ public class User implements Serializable{
 		this.creationTime = creationTime;
 		this.lastModifiedTime = lastModifiedTime;
 		this.password = password;
-		this.authToken = authToken;
 		this.userType=userType;
 	}
 
@@ -157,7 +157,6 @@ public class User implements Serializable{
 		}
 
 
-
 		public String getUserType() {
 			return userType;
 		}
@@ -175,6 +174,41 @@ public class User implements Serializable{
 			return "User [id=" + id + ", email=" + email + ", name=" + name + ", contact=" + contact + ", isActive="
 					+ isActive + ", creationTime=" + creationTime + ", lastModifiedTime=" + lastModifiedTime
 					+ ", password=" + password + ", authToken=" + authToken + ", userType=" + userType + "]";
+		}
+
+
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((email == null) ? 0 : email.hashCode());
+			result = prime * result + ((password == null) ? 0 : password.hashCode());
+			return result;
+		}
+
+
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			User other = (User) obj;
+			if (email == null) {
+				if (other.email != null)
+					return false;
+			} else if (!email.equals(other.email))
+				return false;
+			if (password == null) {
+				if (other.password != null)
+					return false;
+			} else if (!password.equals(other.password))
+				return false;
+			return true;
 		}
 		
 		
