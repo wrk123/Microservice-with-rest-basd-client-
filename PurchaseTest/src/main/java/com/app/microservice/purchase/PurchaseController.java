@@ -123,9 +123,8 @@ public class PurchaseController {
 							purch.setIsActive(false);
 						}
 						user.setIsActive(false);
-						System.out.println(">>>>>>> User successfully made inActive !!!");
-						userLog.userLogOut(user.getEmail());
-						return new ResponseEntity<User>(HttpStatus.UNAUTHORIZED);
+						userLog.userLogOut(user);
+						//return new ResponseEntity<User>(HttpStatus.UNAUTHORIZED);
 					}
 				else
 					{	for(Purchases purch : purchase){

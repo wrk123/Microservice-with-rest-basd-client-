@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,13 +22,13 @@ public class LoginController {
 	UserRepository userDAO;
 		
 	@RequestMapping(value="/login",method=RequestMethod.POST)
-	private ResponseEntity<User> loginUser(@RequestParam String email,@RequestParam String password){
+	private ResponseEntity<User> loginUser(@RequestBody User userLogin){
 		User user=null;
-		user=userDAO.findByEmail(email);
+		user=userDAO.findByEmail(userLogin.getEmail());
 		if(user==null){
 			return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
 		}
-		if(!user.getPassword().equalsIgnoreCase(password)){
+		if(!user.getPassword().equalsIgnoreCase(userLogin.getPassword())){
 			return new ResponseEntity<User>(HttpStatus.UNAUTHORIZED);
 		}
 		if(user.getAuthToken()!=0){
@@ -41,10 +42,10 @@ public class LoginController {
 	}
 	
 	@RequestMapping(value="/logout",method=RequestMethod.POST)
-	String userLogOut(@RequestParam String email){
+	String userLogOut(@RequestBody User userLogout){
 		User user=null;
 		
-			user=userDAO.findByEmail(email);
+			user=userDAO.findByEmail(userLogout.getEmail());
 			if(user.getAuthToken()==0){
 				return "You have already logged out.";
 			}
