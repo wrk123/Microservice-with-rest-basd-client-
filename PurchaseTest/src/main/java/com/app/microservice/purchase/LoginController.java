@@ -22,19 +22,21 @@ public class LoginController {
 	UserRepository userDAO;
 		
 	@RequestMapping(value="/login",method=RequestMethod.POST)
-	private ResponseEntity<User> loginUser(@RequestBody User userLogin){
+	private ResponseEntity<User> loginUser(@RequestBody User userLogin)throws Exception{
 		User user=null;
 		user=userDAO.findByEmail(userLogin.getEmail());
 		if(user==null){
 			return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
 		}
+		if(!user.getIsActive()){
+			 throw new Exception(" User is inactive. Cannot login !!!");
+		}
 		if(!user.getPassword().equalsIgnoreCase(userLogin.getPassword())){
 			return new ResponseEntity<User>(HttpStatus.UNAUTHORIZED);
 		}
-		if(user.getAuthToken()!=0){
+		if(user.getAuthToken()!=null){
 			return new ResponseEntity<User>(user, HttpStatus.OK);
 		}
-		
 		validateToken(user);
 		userDAO.save(user);
 		
