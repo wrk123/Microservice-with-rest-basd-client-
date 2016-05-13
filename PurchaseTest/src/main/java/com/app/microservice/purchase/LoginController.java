@@ -55,7 +55,7 @@ public class LoginController {
 	}
 	
 	void invalidateToken(User user){
-		user.setAuthToken(0);
+		user.setAuthToken(null);
 	}
 	
 	void validateToken(User user){
@@ -63,3 +63,4 @@ public class LoginController {
 	}
 	
 }
+

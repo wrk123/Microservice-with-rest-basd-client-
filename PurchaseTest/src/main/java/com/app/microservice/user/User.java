@@ -53,7 +53,7 @@ public class User implements Serializable{
 	  private String password;
 	  
 	  @Column(name="auth_token")
-	  private int authToken;
+	  private Integer authToken;
 	  
 	  @Column(name="user_type")
 	  private String userType;
@@ -144,11 +144,11 @@ public class User implements Serializable{
 			this.password = password;
 		}
 		
-		public int getAuthToken() {
+		public Integer getAuthToken() {
 			return authToken;
 		}
 		
-		public void setAuthToken(int authToken) {
+		public void setAuthToken(Integer authToken) {
 			this.authToken = authToken;
 		}
 			
@@ -161,13 +161,9 @@ public class User implements Serializable{
 			return userType;
 		}
 
-
-
 		public void setUserType(String userType) {
 			this.userType = userType;
 		}
-
-
 
 		@Override
 		public String toString() {
