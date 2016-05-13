@@ -1,4 +1,4 @@
-# Microservice with rest-basd client in Spring JPA
+# Microservice with rest-based client in Spring JPA
 
 This is sample exmaple Spring based microservice. Here there are two microservices. 
 One is for creating books.
