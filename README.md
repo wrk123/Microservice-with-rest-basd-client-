@@ -8,5 +8,5 @@ Do a git checkout and then got to the directoy and execute the jar file in the t
 For user and purchases -
 `java -jar target/app-0.0.1-SNAPSHOT.jar --server.port=8080`
 
-For Books 
+For Books -
 `java -jar target/app-0.0.1-SNAPSHOT.jar --server.port=8090`
